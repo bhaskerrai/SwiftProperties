@@ -58,6 +58,8 @@ print("Sum:", obj.sum)
 //lazy Properties:
 //A lazy stored property is a property whose initial value isn’t calculated until the first time it’s used. You indicate a lazy stored property by writing the lazy modifier before its declaration.
 
+//The lazy property is marked as lazy var. You can't make it lazy let because lazy properties must always be variables.
+
 
 //As an example, consider this FamilyTree struct:
 
@@ -114,6 +116,44 @@ var james = Person3(name: "James")
 var bond = Person3(name: "Bond")
 
 
+//watch: https://www.youtube.com/watch?v=xKoua1Mi6qE&ab_channel=SeanAllen
+
+struct CalculatorN {
+  
+  static func calculate() -> Int{
+    
+    var arr: [Int] = []
+    for i in 1...4_000{
+        arr.append(i)
+    }
+    return arr.last!
+  }
+}
+
+
+struct PP {
+  
+  
+  var name: String
+  var age: Int
+//  var a = CalculatorN.calculate()
+    
+   lazy var a = {
+       CalculatorN.calculate()
+   }()
+
+  init(name: String, age: Int){
+    self.name = name
+    self.age = age
+
+    print("Mr.\(self.name) of age \(self.age)")
+  }
+}
+  
+
+var x = PP(name: "Ahmed", age: 42)
+
+
 
 
 //“Computed Properties
@@ -138,4 +178,44 @@ struct Sport {
 
 let chessBoxing = Sport(name: "Chessboxing", isOlympicSport: false)
 print(chessBoxing.olympicStatus)
+
+
+struct NewStruct {
+    
+    var rollNo: Int
+    var marksObtained: Float
+    var totalMarks: Float
+    var verdict: String = ""
+    
+    var percentage: Float {
+        
+        get {
+//            return  "\(rollNo) have secured \((marksObtained/totalMarks) * 100) in exams"
+            return (marksObtained/totalMarks) * 100
+        }
+        
+        set(newValue) {
+            if newValue < 50.0 {
+               verdict += "You have failed"
+            }
+            else {
+                verdict += "Weldone! You have passed."
+            }
+        }
+    }
+}
+
+var stu1 = NewStruct(rollNo: 120, marksObtained: 87.54, totalMarks: 100)
+
+var score = stu1.percentage
+//print(stu1.percentage)
+print(score)
+
+stu1.percentage = score
+print(stu1.verdict)
+
+
+//“If a computed property’s setter doesn’t define a name for the new value to be set, a default name of newValue is used”
+
+//“If the entire body of a getter is a single expression, the getter implicitly returns that expression. ”
 
