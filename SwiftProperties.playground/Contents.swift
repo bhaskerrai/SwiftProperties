@@ -219,3 +219,316 @@ print(stu1.verdict)
 
 //“If the entire body of a getter is a single expression, the getter implicitly returns that expression. ”
 
+
+
+//Read-Only Computed Properties
+//A computed property with a getter but no setter is known as a read-only computed property. A read-only computed property always returns a value, and can be accessed through dot syntax, but can’t be set to a different value.
+
+
+//You can simplify the declaration of a read-only computed property by removing the get keyword and its braces:
+print("\n")
+
+struct Area {
+    var length = 0.0
+    var breadth = 0.0
+
+    //getter
+    var area: Double {
+        return length * breadth
+    }
+}
+
+
+let room1 = Area(length: 31, breadth: 20)
+print("The area of the given room is: \(room1.area) meter-square.")
+
+
+
+//encapsulation (accessing and updating private attributes with getter and setter)
+print("\n")
+
+struct linearExpansion {
+    private var initial_Length: Double = 10.0
+    
+    var expansion: Double {
+        get{
+            return initial_Length
+        }
+        
+        set {
+            initial_Length = initial_Length + newValue
+            
+        }
+    }
+}
+
+var nn = linearExpansion()
+
+var s = nn.expansion
+print("Initial length:", s)
+
+//expansion is 5 in the original length
+nn.expansion = 5 //setter
+
+//it give total length( initial length + expansion)
+print("Length after expansioin:",nn.expansion) //getter
+
+//print(nn.length) //error beacuse length is private attribut, we can view and update private attributes by encapsulation(getter and setter).
+
+
+
+//Property Observers
+//Property observers observe and respond to changes in a property’s value. Property observers are called every time a property’s value is set, even if the new value is the same as the property’s current value.
+
+
+
+//You have the option to define either or both of these observers on a property:
+
+//willSet is called just before the value is stored.
+//didSet is called immediately after the new value is stored.
+
+class StepCounter {
+    var totalSteps: Int = 0 {
+        willSet(newTotalSteps) {
+            print("About to set totalSteps to \(newTotalSteps)")
+        }
+        
+        didSet {
+            if totalSteps > oldValue {
+                print("Added \(totalSteps - oldValue) steps.")
+            }
+        }
+    }
+}
+
+
+var steps = StepCounter()
+
+steps.totalSteps = 210
+
+//Property Wrappers
+//A property wrapper adds a layer of separation between code that manages how a property is stored and the code that defines a property.
+
+@propertyWrapper
+struct BagWeight{
+    private var bagWeight: Double = 0.0
+    
+    var wrappedValue: Double {
+        get { return bagWeight}
+        
+        set {
+            bagWeight = min(newValue, 50.0) //bag weight should be either 50 pounds or less.
+        }
+    }
+    
+}
+
+struct PassengerItems {
+    @BagWeight var bags: Double
+}
+
+var passenger = PassengerItems()
+passenger.bags
+
+
+passenger.bags = 48.5
+print(passenger.bags)
+
+passenger.bags = 77.0
+print(passenger.bags) //print 50 cuz if the weigth is more than 50 , then 50(the largest allowed value) is printed.
+
+
+
+//the above can also be written as:
+
+//After making struct BagWeight as above:
+struct PassengerThings {
+    private var bags = BagWeight()
+    
+    var weight: Double {
+        
+        get { return bags.wrappedValue }
+        
+        set { bags.wrappedValue = newValue }
+    }
+}
+
+//The bags property store an instance of the property wrapper, BagWeight. The getter and setter for bags wrap access to the wrappedValue property.
+
+
+
+
+//Setting Initial Values for Wrapped Properties
+//The code in the examples above sets the initial value for the wrapped property by giving number an initial value in the definition of TwelveOrLess. Code that uses this property wrapper can’t specify a different initial value for a property that’s wrapped by TwelveOrLess—for example, the definition of SmallRectangle can’t give height or width initial values. To support setting an initial value or other customization, the property wrapper needs to add an initializer.
+
+@propertyWrapper
+struct SmallNumber {
+    private var maximun: Int
+    private var num: Int
+    
+    var wrappedValue: Int {
+        get { return num }
+        
+        set { num = min(newValue, maximun) }
+    }
+    
+    init() {
+        maximun = 12
+        num = 0
+    }
+    
+    init(wrappedValue: Int) {
+        maximun = 12
+        num = min(wrappedValue, maximun)
+    }
+    
+    init(wrappedValue: Int, maximum: Int) {
+        self.maximun = maximum
+        num = min(wrappedValue, maximum)
+    }
+}
+
+//When you apply a wrapper to a property and you don’t specify an initial value, Swift uses the init() initializer to set up the wrapper.
+
+struct ZeroRectangle {
+    @SmallNumber var height: Int
+    @SmallNumber var width: Int
+}
+
+var zeroRect = ZeroRectangle()
+print("\nheight is:", zeroRect.height, "& width is:", zeroRect.width)
+
+
+//When you specify an initial value for the property, Swift uses the init(wrappedValue:) initializer to set up the wrapper.
+struct UnitRectangle {
+    @SmallNumber var height: Int = 1
+    @SmallNumber var width: Int = 1
+}
+
+var unitRect = UnitRectangle()
+print("\nheight is:", unitRect.height, "& width is:", unitRect.width)
+
+
+
+//If you provide an initial value and a maximum value, Swift uses the init(wrappedValue:maximum:) initializer:
+struct NarrowRectangle {
+    @SmallNumber(wrappedValue: 15, maximum: 18) var height: Int
+    @SmallNumber(wrappedValue: 11, maximum: 15) var width: Int
+}
+
+var narrowRect = NarrowRectangle()
+print("\nheight is:", narrowRect.height, "& width is:", narrowRect.width)
+
+narrowRect.height = 23
+narrowRect.width = 19
+print("\nheight is:", narrowRect.height, "& width is:", narrowRect.width)
+
+
+//Swift treats the assignment like a wrappedValue argument and uses the initializer that accepts the arguments you include.
+
+struct MixedRectangle {
+    @SmallNumber(wrappedValue: 25, maximum: 50) var height: Int
+    @SmallNumber var width: Int = 16
+}
+
+var mixedRect = MixedRectangle()
+print("\nheight is:", mixedRect.height, "& width is:", mixedRect.width) //width will be printed 12 as 12 is minimum number in min(16, 12)
+
+
+
+
+
+//Projecting a Value From a Property Wrapper
+//In addition to the wrapped value, a property wrapper can expose additional functionality by defining a projected value—for example, a property wrapper that manages access to a database can expose a flushDatabaseConnection() method on its projected value. The name of the projected value is the same as the wrapped value, except it begins with a dollar sign ($).
+
+@propertyWrapper
+struct SmallNum {
+    private var num: Int
+    private(set) var projectedValue: Bool
+    
+    var wrappedValue: Int {
+        get { return num}
+        
+        set {
+            if newValue > 12 {
+                num = 12
+                projectedValue = true
+
+            }
+            else {
+                num = newValue
+                projectedValue = false
+            }
+        }
+    }
+    
+    init() {
+        self.num = 0
+        self.projectedValue = false
+    }
+}
+
+struct SomeStruct {
+    @SmallNum var someNum: Int
+}
+
+var someStruct = SomeStruct()
+someStruct.someNum = 10
+print(someStruct.$someNum)
+someStruct.someNum = 29
+print(someStruct.$someNum)
+
+
+
+//Global and Local Variables
+//Both stored and computed variables/properties can be global or local.
+
+
+//Global constants and variables are always computed lazily, in a similar manner to Lazy Stored Properties. Unlike lazy stored properties, global constants and variables don’t need to be marked with the lazy modifier.
+//Local constants and variables are never computed lazily.
+
+//You can apply a property wrapper to a local stored variable, but not to a global variable or a computed variable.
+
+
+
+//Type Properties
+//Whenever we create a new instance of a class, we can set the properties of that instance. These instances have their own properties and these are called instance properties. So if we want to create multiple instances of a class, we can set the properties of each instance individually. But it would not be a good practice to set the properties of each instance individually. Then comes type properties to the rescue. Type properties are shared among all instances of a class. Only one copy of the properties is created for all the instances of a type we create.
+
+//Type properties are created using the static keyword. So we can access the properties of a type using the class name. But we cannot access the properties of an instance using the instance name.
+
+
+// Ios is a type
+struct Ios
+{
+
+    // Version is a type property
+    static var version = "iOS 10"
+    
+    // getVersion is a type method
+    static func getVersion()
+    {
+    
+        // Printing the version
+        print(version)
+    }
+}
+
+// Printing the version
+Ios.getVersion()
+
+// Printing the version
+print(Ios.version)
+
+
+struct SomeStruct2 {
+    
+    static var a = "Hello" //storedTypeProperty
+    
+    static var b: Int {    //computedTypeProperty
+        return 125
+    }
+}
+
+
+//Type properties are queried and set with dot syntax, just like instance properties. However, type properties are queried and set on the type, not on an instance of that type. For example:
+print(SomeStruct2.b)
